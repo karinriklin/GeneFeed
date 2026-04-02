@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeneFeed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F7F3EC;
+    --cream-dark: #EDE7DB;
+    --green: #2D4A3E;
+    --green-mid: #3D6B5A;
+    --green-light: #E8F0EC;
+    --terra: #C4622D;
+    --terra-light: #F5E8E0;
+    --amber: #D4931A;
+    --amber-light: #FDF3DC;
+    --text: #1C2B25;
+    --text-mid: #4A6358;
+    --text-soft: #7A9588;
+    --border: rgba(44,74,62,0.12);
+    --border-mid: rgba(44,74,62,0.2);
+    --card: #FFFFFF;
+    --shadow: 0 2px 12px rgba(44,74,62,0.08);
+    --shadow-lg: 0 8px 32px rgba(44,74,62,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .serif { font-family: 'Fraunces', serif; }
+
+  h1 { font-family: 'Fraunces', serif; font-size: clamp(28px, 5vw, 42px); font-weight: 500; line-height: 1.15; }
+  h2 { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; line-height: 1.2; }
+  h3 { font-size: 16px; font-weight: 500; }
+
+  /* ── LAYOUT ── */
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
+
+  .screen { display: none; flex-direction: column; min-height: 100vh; padding: 0 20px 100px; animation: fadeUp 0.35s ease; }
+  .screen.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HEADER ── */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 20px 0;
+    position: sticky; top: 0; background: var(--cream); z-index: 10;
+  }
+  .logo {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    color: var(--green); letter-spacing: -0.3px;
+  }
+  .logo span { color: var(--terra); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--card); border-top: 1px solid var(--border);
+    display: flex; padding: 10px 0 20px;
+    z-index: 100;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; padding: 6px 0;
+    color: var(--text-soft); font-size: 11px; font-weight: 500;
+    transition: color 0.2s;
+    background: none; border: none;
+  }
+  .nav-item.active { color: var(--green); }
+  .nav-icon { width: 22px; height: 22px; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    background: var(--green); color: #fff;
+    border: none; border-radius: var(--radius-sm); padding: 16px 24px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; width: 100%; transition: background 0.2s, transform 0.1s;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:hover { background: var(--green-mid); }
+  .btn-primary:disabled { background: var(--text-soft); cursor: not-allowed; }
+
+  .btn-secondary {
+    background: transparent; color: var(--green);
+    border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm); padding: 14px 24px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; width: 100%; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--green); background: var(--green-light); }
+
+  .btn-terra {
+    background: var(--terra); color: #fff;
+    border: none; border-radius: var(--radius-sm); padding: 14px 24px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  /* ── CHIPS ── */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    padding: 8px 16px; border-radius: 999px;
+    border: 1.5px solid var(--border-mid); background: var(--card);
+    font-size: 13px; font-weight: 400; color: var(--text-mid);
+    cursor: pointer; transition: all 0.15s;
+    user-select: none;
+  }
+  .chip.selected {
+    background: var(--green); border-color: var(--green); color: #fff;
+  }
+  .chip.goal {
+    padding: 12px 18px; font-size: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chip.goal.selected { background: var(--green); border-color: var(--green); color: #fff; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── ONBOARDING ── */
+  .onboard-hero {
+    padding: 40px 0 28px;
+  }
+  .onboard-step { font-size: 12px; font-weight: 500; color: var(--terra); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .onboard-title { margin-bottom: 6px; }
+  .onboard-sub { color: var(--text-soft); font-size: 14px; }
+
+  .step-dots { display: flex; gap: 6px; margin-top: 28px; }
+  .step-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--border-mid); transition: all 0.3s; }
+  .step-dot.active { width: 20px; background: var(--green); }
+
+  /* household stepper */
+  .stepper {
+    display: flex; align-items: center; gap: 20px;
+    background: var(--cream-dark); border-radius: var(--radius-sm); padding: 10px 16px;
+    width: fit-content; margin-top: 14px;
+  }
+  .stepper-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--card); border: 1px solid var(--border-mid);
+    font-size: 20px; font-weight: 300; cursor: pointer; color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .stepper-btn:hover { background: var(--green); color: #fff; border-color: var(--green); }
+  .stepper-val { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 500; color: var(--text); min-width: 24px; text-align: center; }
+  .stepper-label { font-size: 12px; color: var(--text-soft); margin-left: 4px; }
+
+  /* ── CONFLICT WARNING ── */
+  .warning-banner {
+    background: var(--amber-light); border: 1px solid var(--amber);
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    font-size: 13px; color: #7A5000; margin-top: 12px; display: none;
+  }
+  .warning-banner.visible { display: block; }
+
+  /* ── LOADING ── */
+  .loading-screen {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 40px 20px; text-align: center;
+  }
+  .loading-screen.active { display: flex; }
+
+  .loading-orb {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px; position: relative;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(45,74,62,0.2); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(45,74,62,0); }
+  }
+  .loading-tip { font-size: 13px; color: var(--text-soft); margin-top: 16px; max-width: 260px; }
+
+  /* ── PLAN SCREEN ── */
+  .plan-header { padding: 24px 0 16px; }
+  .plan-meta { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+
+  .day-group { margin-bottom: 12px; }
+  .day-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-soft); padding: 16px 0 8px;
+    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+  }
+  .day-label .day-name { color: var(--text); font-size: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .day-chevron { transition: transform 0.25s; font-size: 12px; }
+  .day-group.collapsed .day-chevron { transform: rotate(-90deg); }
+  .day-group.collapsed .day-meals { display: none; }
+
+  .meal-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .meal-card:hover { box-shadow: var(--shadow); }
+
+  .meal-inner { padding: 14px 16px; }
+  .meal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .meal-badge {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .badge-breakfast { background: var(--amber-light); color: #7A5000; }
+  .badge-lunch { background: var(--green-light); color: var(--green); }
+  .badge-dinner { background: var(--terra-light); color: #8B3A18; }
+
+  .meal-name { font-size: 15px; font-weight: 500; margin-top: 6px; line-height: 1.3; }
+  .meal-desc { font-size: 13px; color: var(--text-soft); margin-top: 3px; line-height: 1.5; }
+
+  .meal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .macro-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .macro-pill {
+    font-size: 11px; color: var(--text-mid); background: var(--cream);
+    padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border);
+  }
+  .prep-time { font-size: 11px; color: var(--text-soft); display: flex; align-items: center; gap: 4px; }
+
+  .meal-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .action-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px;
+    font-size: 12px; color: var(--text-mid); cursor: pointer;
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .action-btn:hover { border-color: var(--green); color: var(--green); }
+  .action-btn.liked { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .action-btn.disliked { background: var(--terra-light); border-color: var(--terra); color: var(--terra); }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 4px; background: var(--cream-dark);
+    border-radius: var(--radius-sm); padding: 4px; margin-bottom: 20px;
+  }
+  .tab {
+    flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500;
+    color: var(--text-soft); border-radius: 8px; cursor: pointer;
+    transition: all 0.2s; border: none; background: none; font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active { background: var(--card); color: var(--green); box-shadow: var(--shadow); }
+
+  /* ── SHOPPING LIST ── */
+  .shop-category { margin-bottom: 20px; }
+  .shop-cat-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-soft); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .shop-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .shop-item:last-child { border-bottom: none; }
+  .shop-check {
+    width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border-mid);
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .shop-check.checked { background: var(--green); border-color: var(--green); }
+  .shop-check.checked::after { content: '✓'; color: #fff; font-size: 12px; }
+  .shop-name { flex: 1; font-size: 14px; }
+  .shop-qty { font-size: 13px; color: var(--text-soft); }
+  .methylation-mark { color: var(--amber); font-size: 11px; }
+
+  /* ── SUPPLEMENTS ── */
+  .suppl-card {
+    background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+    padding: 16px; margin-bottom: 10px;
+  }
+  .suppl-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .suppl-name { font-size: 15px; font-weight: 500; }
+  .suppl-timing {
+    font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 999px;
+    background: var(--amber-light); color: #7A5000;
+  }
+  .suppl-reason { font-size: 13px; color: var(--text-soft); margin-top: 6px; line-height: 1.5; }
+  .suppl-critical { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--terra); margin-top: 6px; font-weight: 500; }
+
+  /* ── PROFILE ── */
+  .profile-section { margin-bottom: 28px; }
+  .profile-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); margin-bottom: 12px; }
+
+  .taste-stat { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .taste-stat:last-child { border-bottom: none; }
+  .taste-key { font-size: 14px; color: var(--text-mid); }
+  .taste-val { font-size: 14px; font-weight: 500; color: var(--green); }
+
+  .pref-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13px; margin: 4px; }
+  .pref-liked { background: var(--green-light); color: var(--green); }
+  .pref-disliked { background: var(--terra-light); color: var(--terra); }
+
+  textarea.notes-input {
+    width: 100%; border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm);
+    padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text); background: var(--card); resize: none; height: 90px;
+    outline: none; transition: border-color 0.2s; margin-top: 8px;
+  }
+  textarea.notes-input:focus { border-color: var(--green); }
+
+  /* ── FEEDBACK BANNER ── */
+  .feedback-banner {
+    background: var(--green-light); border: 1px solid rgba(45,74,62,0.2);
+    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px;
+    display: none;
+  }
+  .feedback-banner.visible { display: block; }
+  .feedback-banner-title { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+  .feedback-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .feedback-opt {
+    padding: 7px 14px; border-radius: 999px; font-size: 13px;
+    border: 1.5px solid var(--border-mid); background: var(--card);
+    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .feedback-opt:hover { border-color: var(--green); color: var(--green); }
+  .feedback-dismiss { font-size: 12px; color: var(--text-soft); cursor: pointer; margin-left: auto; display: block; text-align: right; margin-top: 8px; }
+
+  .micro-survey {
+    background: var(--cream-dark); border-radius: var(--radius-sm);
+    padding: 14px 16px; margin-top: 16px; display: none;
+  }
+  .micro-survey.visible { display: block; }
+  .micro-survey textarea {
+    width: 100%; border: 1.5px solid var(--border-mid); border-radius: 8px;
+    padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    background: var(--card); color: var(--text); resize: none; height: 70px;
+    outline: none; margin-top: 8px;
+  }
+  .micro-survey-label { font-size: 13px; font-weight: 500; color: var(--text-mid); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; padding: 10px 20px; border-radius: 999px;
+    font-size: 13px; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 60px 20px;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: var(--text-soft); margin-bottom: 24px; line-height: 1.6; max-width: 280px; }
+
+  /* ── OPTIONAL INPUTS ── */
+  .optional-section { margin-top: 20px; }
+  .optional-toggle { font-size: 13px; color: var(--text-soft); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .optional-fields { display: none; margin-top: 14px; }
+  .optional-fields.open { display: block; }
+  .field-label { font-size: 13px; color: var(--text-mid); font-weight: 500; margin-bottom: 6px; }
+  input.field-input {
+    width: 100%; border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm);
+    padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text); background: var(--card); outline: none;
+    transition: border-color 0.2s; margin-bottom: 14px;
+  }
+  input.field-input:focus { border-color: var(--green); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar" style="display:none">
+    <div class="logo">Gene<span>Feed</span></div>
+    <div id="topbar-right"></div>
+  </div>
+
+  <!-- ══ SCREEN: ONBOARD 1 ══ -->
+  <div class="screen active" id="screen-onboard1" style="padding-top:0">
+    <div style="padding: 48px 0 32px">
+      <div class="serif" style="font-size:13px; color:var(--terra); font-weight:500; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Step 1 of 3</div>
+      <h1>Who are you<br><em style="font-style:italic; color:var(--green)">eating for?</em></h1>
+      <p style="color:var(--text-soft); font-size:14px; margin-top:10px; line-height:1.6">Tell us about your household and any dietary needs. We'll build the plan around you.</p>
+      <div class="step-dots" style="margin-top:24px">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:24px">
+      <h3 style="margin-bottom:6px">Household size</h3>
+      <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px">How many people are you cooking for?</p>
+      <div style="display:flex; align-items:center; gap:16px">
+        <div class="stepper">
+          <button class="stepper-btn" onclick="changeHousehold(-1)">−</button>
+          <span class="stepper-val" id="household-val">2</span>
+          <button class="stepper-btn" onclick="changeHousehold(1)">+</button>
+        </div>
+        <span class="stepper-label" id="household-label">people</span>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="margin-bottom:6px">Dietary restrictions</h3>
+      <p style="font-size:13px; color:var(--text-soft); margin-bottom:4px">Select all that apply. You can combine them.</p>
+      <div class="chip-group" id="diet-chips">
+        <div class="chip" data-val="none" onclick="toggleDiet(this)">None</div>
+        <div class="chip" data-val="vegan" onclick="toggleDiet(this)">Vegan</div>
+        <div class="chip" data-val="vegetarian" onclick="toggleDiet(this)">Vegetarian</div>
+        <div class="chip" data-val="gluten-free" onclick="toggleDiet(this)">Gluten-free</div>
+        <div class="chip" data-val="dairy-free" onclick="toggleDiet(this)">Dairy-free</div>
+        <div class="chip" data-val="carnivore" onclick="toggleDiet(this)">Carnivore</div>
+        <div class="chip" data-val="keto" onclick="toggleDiet(this)">Keto / low-carb</div>
+      </div>
+      <div class="warning-banner" id="conflict-warning">
+        ⚠ Carnivore and plant-based diets can't be combined. We'll follow your carnivore preference.
+      </div>
+    </div>
+
+    <div style="margin-top:auto; padding-top:32px">
+      <button class="btn-primary" onclick="goTo('screen-onboard2')">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: ONBOARD 2 ══ -->
+  <div class="screen" id="screen-onboard2" style="padding-top:0">
+    <div style="padding: 48px 0 32px">
+      <div class="serif" style="font-size:13px; color:var(--terra); font-weight:500; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Step 2 of 3</div>
+      <h1>What's your<br><em style="font-style:italic; color:var(--green)">main goal?</em></h1>
+      <p style="color:var(--text-soft); font-size:14px; margin-top:10px; line-height:1.6">This shapes how we balance your macros and meal timing.</p>
+      <div class="step-dots" style="margin-top:24px">
+        <div class="step-dot"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+    </div>
+
+    <div class="chip-group" id="goal-chips" style="flex-direction:column; gap:10px">
+      <div class="chip goal" data-val="energy" onclick="selectGoal(this)">⚡ Energy & focus</div>
+      <div class="chip goal" data-val="weight" onclick="selectGoal(this)">⚖ Weight management</div>
+      <div class="chip goal selected" data-val="muscle" onclick="selectGoal(this)">💪 Build muscle</div>
+      <div class="chip goal" data-val="longevity" onclick="selectGoal(this)">🌿 Longevity</div>
+      <div class="chip goal" data-val="general" onclick="selectGoal(this)">✨ General health</div>
+    </div>
+
+    <div class="optional-section">
+      <div class="optional-toggle" onclick="toggleOptional()">
+        <span id="optional-arrow">▸</span> Add optional details
+      </div>
+      <div class="optional-fields" id="optional-fields">
+        <div style="height:14px"></div>
+        <div class="field-label">Foods to avoid or allergies</div>
+        <input type="text" class="field-input" id="field-avoid" placeholder="e.g. shellfish, cilantro, peanuts">
+        <div class="field-label">Your weight (for macro scaling)</div>
+        <input type="number" class="field-input" id="field-weight" placeholder="kg">
+      </div>
+    </div>
+
+    <div style="margin-top:auto; padding-top:24px; display:flex; gap:10px">
+      <button class="btn-secondary" onclick="goTo('screen-onboard1')" style="width:auto; padding:14px 20px">←</button>
+      <button class="btn-primary" onclick="goTo('screen-onboard3')">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: ONBOARD 3 ══ -->
+  <div class="screen" id="screen-onboard3" style="padding-top:0">
+    <div style="padding: 48px 0 32px">
+      <div class="serif" style="font-size:13px; color:var(--terra); font-weight:500; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:12px">Step 3 of 3</div>
+      <h1>Ready to build<br><em style="font-style:italic; color:var(--green)">your plan.</em></h1>
+      <p style="color:var(--text-soft); font-size:14px; margin-top:10px; line-height:1.6">Your personalised 7-day meal plan, shopping list, recipes, macros and supplement stack — all in one place.</p>
+      <div class="step-dots" style="margin-top:24px">
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot active"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div style="font-size:13px; color:var(--text-soft); margin-bottom:14px; font-weight:500">Your plan will include</div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px"><span style="color:var(--green)">✓</span> 7-day meal plan (21 meals)</div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px"><span style="color:var(--green)">✓</span> Full recipes with instructions</div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px"><span style="color:var(--green)">✓</span> Scaled shopping list</div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px"><span style="color:var(--green)">✓</span> Macros & key nutrients</div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:14px"><span style="color:var(--green)">✓</span> Personalised supplement stack</div>
+      </div>
+    </div>
+
+    <div id="summary-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:24px"></div>
+
+    <div style="margin-top:auto">
+      <button class="btn-primary" onclick="generatePlan()" id="generate-btn" style="font-size:16px; padding:18px">
+        Generate my plan ✦
+      </button>
+      <p style="text-align:center; font-size:12px; color:var(--text-soft); margin-top:12px">Powered by AI · Takes ~15 seconds</p>
+    </div>
+  </div>
+
+  <!-- ══ LOADING ══ -->
+  <div class="loading-screen" id="screen-loading">
+    <div class="loading-orb">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <path d="M18 6C11.4 6 6 11.4 6 18s5.4 12 12 12 12-5.4 12-12" stroke="#2D4A3E" stroke-width="2" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="rotate" values="0 18 18;360 18 18" dur="1.2s" repeatCount="indefinite"/>
+        </path>
+        <circle cx="18" cy="18" r="4" fill="#2D4A3E" opacity="0.3"/>
+      </svg>
+    </div>
+    <h2 style="font-family:'Fraunces',serif; font-weight:500">Building your plan…</h2>
+    <p class="loading-tip" id="loading-tip">Applying Gary Brecka's biohacking principles to your preferences</p>
+  </div>
+
+  <!-- ══ SCREEN: PLAN ══ -->
+  <div class="screen" id="screen-plan">
+    <div class="plan-header">
+      <h2>Your week</h2>
+      <p class="plan-meta" id="plan-meta">7-day plan · Generated just now</p>
+    </div>
+
+    <div class="feedback-banner" id="feedback-banner">
+      <div class="feedback-banner-title">How's your plan going?</div>
+      <div class="feedback-options">
+        <button class="feedback-opt" onclick="planFeedback('great')">🌿 Great</button>
+        <button class="feedback-opt" onclick="planFeedback('ok')">👍 It's OK</button>
+        <button class="feedback-opt" onclick="planFeedback('bad')">🤔 Not for me</button>
+      </div>
+      <span class="feedback-dismiss" onclick="dismissFeedback()">Dismiss</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('meals')">Meals</button>
+      <button class="tab" onclick="switchTab('shopping')">Shopping</button>
+      <button class="tab" onclick="switchTab('supplements')">Supplements</button>
+    </div>
+
+    <div id="tab-meals">
+      <div id="plan-days"></div>
+
+      <div class="micro-survey" id="micro-survey">
+        <div class="micro-survey-label">Anything we should know for next time?</div>
+        <textarea id="micro-text" placeholder="e.g. I prefer quick breakfasts, love Asian flavours, hate cilantro…" maxlength="280"></textarea>
+        <div style="display:flex; gap:8px; margin-top:10px">
+          <button class="btn-primary" style="font-size:13px; padding:10px 16px" onclick="saveMicroFeedback()">Save preference</button>
+          <button class="btn-secondary" style="font-size:13px; padding:10px 16px; width:auto" onclick="dismissMicro()">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-shopping" style="display:none">
+      <div id="shopping-content"></div>
+    </div>
+
+    <div id="tab-supplements" style="display:none">
+      <div id="supplements-content"></div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: PROFILE ══ -->
+  <div class="screen" id="screen-profile">
+    <div class="plan-header">
+      <h2>Your taste profile</h2>
+      <p class="plan-meta">What GeneFeed has learned about you</p>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-label">Stats</div>
+      <div class="card">
+        <div class="taste-stat"><span class="taste-key">Plans generated</span><span class="taste-val" id="stat-plans">0</span></div>
+        <div class="taste-stat"><span class="taste-key">Meals rated</span><span class="taste-val" id="stat-rated">0</span></div>
+        <div class="taste-stat"><span class="taste-key">Liked meals</span><span class="taste-val" id="stat-liked">0</span></div>
+        <div class="taste-stat"><span class="taste-key">Disliked meals</span><span class="taste-val" id="stat-disliked">0</span></div>
+      </div>
+    </div>
+
+    <div class="profile-section" id="liked-section" style="display:none">
+      <div class="profile-label">Meals you love</div>
+      <div id="liked-tags"></div>
+    </div>
+
+    <div class="profile-section" id="disliked-section" style="display:none">
+      <div class="profile-label">Meals to avoid</div>
+      <div id="disliked-tags"></div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-label">Your notes</div>
+      <p style="font-size:13px; color:var(--text-soft); margin-bottom:6px">Hard constraints passed to every plan generation.</p>
+      <textarea class="notes-input" id="explicit-notes" placeholder="e.g. I love spicy food, hate cilantro, prefer quick breakfasts…"></textarea>
+      <button class="btn-primary" style="margin-top:10px" onclick="saveNotes()">Save notes</button>
+    </div>
+
+    <div class="profile-section">
+      <button class="btn-secondary" onclick="resetProfile()">Reset my profile</button>
+    </div>
+  </div>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="bottom-nav" id="bottom-nav" style="display:none">
+    <button class="nav-item active" id="nav-plan" onclick="navTo('plan')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Plan
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="navTo('profile')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profile
+    </button>
+    <button class="nav-item" id="nav-new" onclick="navTo('new')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      New plan
+    </button>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ── STATE ──
+let state = {
+  household: 2,
+  diets: [],
+  goal: 'muscle',
+  avoid: '',
+  weight: '',
+  plan: null,
+};
+
+let profile = JSON.parse(localStorage.getItem('nc_profile') || JSON.stringify({
+  liked: [], disliked: [], notes: '', plansGenerated: 0, rated: 0,
+  lastSurvey: 0, lastFeedback: 0
+}));
+
+const loadingTips = [
+  'Applying Gary Brecka\'s biohacking principles…',
+  'Balancing macros for your goal…',
+  'Building your methylation support stack…',
+  'Crafting your 7-day shopping list…',
+  'Finalising your supplement recommendations…'
+];
+
+// ── NAVIGATION ──
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  if (screenId === 'screen-onboard3') buildSummaryChips();
+  window.scrollTo(0, 0);
+}
+
+function navTo(tab) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (tab === 'plan') {
+    document.getElementById('nav-plan').classList.add('active');
+    goTo('screen-plan');
+  } else if (tab === 'profile') {
+    document.getElementById('nav-profile').classList.add('active');
+    updateProfileScreen();
+    goTo('screen-profile');
+  } else if (tab === 'new') {
+    document.getElementById('nav-new').classList.add('active');
+    goTo('screen-onboard1');
+    document.getElementById('bottom-nav').style.display = 'none';
+    document.getElementById('topbar').style.display = 'none';
+  }
+}
+
+// ── ONBOARDING ──
+function changeHousehold(delta) {
+  state.household = Math.max(1, Math.min(6, state.household + delta));
+  document.getElementById('household-val').textContent = state.household;
+  document.getElementById('household-label').textContent = state.household === 1 ? 'person' : 'people';
+}
+
+function toggleDiet(el) {
+  const val = el.dataset.val;
+  if (val === 'none') {
+    document.querySelectorAll('#diet-chips .chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    state.diets = [];
+    document.getElementById('conflict-warning').classList.remove('visible');
+    return;
+  }
+  document.querySelector('[data-val="none"]').classList.remove('selected');
+  el.classList.toggle('selected');
+  state.diets = Array.from(document.querySelectorAll('#diet-chips .chip.selected')).map(c => c.dataset.val);
+  const hasCarnivore = state.diets.includes('carnivore');
+  const hasPlant = state.diets.some(d => ['vegan','vegetarian'].includes(d));
+  document.getElementById('conflict-warning').classList.toggle('visible', hasCarnivore && hasPlant);
+}
+
+function selectGoal(el) {
+  document.querySelectorAll('#goal-chips .chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.goal = el.dataset.val;
+}
+
+function toggleOptional() {
+  const f = document.getElementById('optional-fields');
+  const a = document.getElementById('optional-arrow');
+  f.classList.toggle('open');
+  a.textContent = f.classList.contains('open') ? '▾' : '▸';
+}
+
+function buildSummaryChips() {
+  const c = document.getElementById('summary-chips');
+  c.innerHTML = '';
+  const items = [
+    `👥 ${state.household} ${state.household===1?'person':'people'}`,
+    ...state.diets.map(d => d.charAt(0).toUpperCase()+d.slice(1)),
+    { energy:'⚡ Energy', weight:'⚖ Weight loss', muscle:'💪 Muscle', longevity:'🌿 Longevity', general:'✨ General health' }[state.goal]
+  ].filter(Boolean);
+  items.forEach(i => {
+    const chip = document.createElement('div');
+    chip.className = 'chip selected';
+    chip.style.fontSize = '12px';
+    chip.style.padding = '5px 12px';
+    chip.textContent = i;
+    c.appendChild(chip);
+  });
+}
+
+// ── GENERATION ──
+async function generatePlan() {
+  state.avoid = document.getElementById('field-avoid').value;
+  state.weight = document.getElementById('field-weight').value;
+
+  goTo('screen-loading');
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('topbar').style.display = 'none';
+
+  let tipIdx = 0;
+  const tipEl = document.getElementById('loading-tip');
+  const tipInterval = setInterval(() => {
+    tipIdx = (tipIdx + 1) % loadingTips.length;
+    tipEl.style.opacity = 0;
+    setTimeout(() => { tipEl.textContent = loadingTips[tipIdx]; tipEl.style.opacity = 1; }, 300);
+  }, 2800);
+  tipEl.style.transition = 'opacity 0.3s';
+
+  const dietStr = state.diets.length ? state.diets.join(', ') : 'no restrictions';
+  const goalLabels = { energy:'energy & focus', weight:'weight management', muscle:'muscle building', longevity:'longevity', general:'general health' };
+  const profileContext = profile.liked.length || profile.disliked.length || profile.notes
+    ? `\nUser preferences: liked meals: ${profile.liked.slice(0,6).join(', ')||'none yet'}; disliked meals: ${profile.disliked.slice(0,6).join(', ')||'none yet'}; notes: ${profile.notes||'none'}.`
+    : '';
+
+  const prompt = `You are GeneFeed, a biohacking nutrition assistant inspired by Gary Brecka's principles.
+
+Generate a complete 7-day meal plan for a household of ${state.household} person(s), dietary restrictions: ${dietStr}, health goal: ${goalLabels[state.goal]}.${state.avoid ? ` Foods to avoid: ${state.avoid}.` : ''}${state.weight ? ` User weight: ${state.weight}kg.` : ''}${profileContext}
+
+Principles: high protein whole foods, no ultra-processed ingredients, methylation support (leafy greens, eggs, liver), circadian eating (8-10hr window), organic whole ingredients. Dietary restrictions override all other principles.
+
+Respond ONLY with a valid JSON object (no markdown, no extra text):
+{
+  "days": [
+    {
+      "day": "Monday",
+      "meals": [
+        {
+          "type": "breakfast",
+          "name": "dish name",
+          "desc": "2-line description",
+          "prep": "15 min",
+          "calories": 420,
+          "protein": 32,
+          "carbs": 28,
+          "fat": 18,
+          "nutrients": ["B12", "Choline"],
+          "recipe": {
+            "ingredients": ["2 eggs", "100g spinach", "..."],
+            "steps": ["Step 1", "Step 2", "..."],
+            "why": "Eggs are Gary Brecka's top methylation food — rich in choline and B12."
+          }
+        }
+      ]
+    }
+  ],
+  "shopping": {
+    "Proteins": [{"item":"Chicken breast","qty":"1.2kg","methylation":false}],
+    "Produce": [],
+    "Pantry": [],
+    "Dairy / Alternatives": [],
+    "Supplements": []
+  },
+  "supplements": [
+    {
+      "name":"Magnesium glycinate",
+      "timing":"Evening",
+      "reason":"Supports sleep quality and muscle recovery.",
+      "critical":false
+    }
+  ]
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    let raw = data.content[0].text.trim();
+    raw = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    state.plan = JSON.parse(raw);
+  } catch(e) {
+    state.plan = getMockPlan();
+  }
+
+  clearInterval(tipInterval);
+  profile.plansGenerated++;
+  saveProfile();
+
+  renderPlan();
+
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('bottom-nav').style.display = 'flex';
+  document.getElementById('nav-plan').classList.add('active');
+  document.getElementById('nav-profile').classList.remove('active');
+  document.getElementById('nav-new').classList.remove('active');
+
+  goTo('screen-plan');
+
+  // show micro survey if not shown this week
+  const now = Date.now();
+  if (now - profile.lastSurvey > 7 * 24 * 60 * 60 * 1000) {
+    setTimeout(() => { document.getElementById('micro-survey').classList.add('visible'); }, 2000);
+  }
+}
+
+// ── RENDER PLAN ──
+function renderPlan() {
+  const plan = state.plan;
+  const daysEl = document.getElementById('plan-days');
+  daysEl.innerHTML = '';
+
+  const meta = `${state.household} ${state.household===1?'person':'people'} · ${state.diets.length ? state.diets.join(', ') : 'No restrictions'} · ${({energy:'Energy',weight:'Weight loss',muscle:'Muscle',longevity:'Longevity',general:'General health'})[state.goal]}`;
+  document.getElementById('plan-meta').textContent = meta;
+
+  plan.days.forEach((day, di) => {
+    const group = document.createElement('div');
+    group.className = 'day-group';
+    group.id = `day-${di}`;
+
+    const label = document.createElement('div');
+    label.className = 'day-label';
+    label.innerHTML = `<span class="day-name">${day.day}</span><span class="day-chevron">▾</span>`;
+    label.onclick = () => { group.classList.toggle('collapsed'); };
+
+    const meals = document.createElement('div');
+    meals.className = 'day-meals';
+
+    day.meals.forEach((meal, mi) => {
+      meals.appendChild(buildMealCard(meal, `${di}-${mi}`));
+    });
+
+    group.appendChild(label);
+    group.appendChild(meals);
+    daysEl.appendChild(group);
+  });
+
+  // Shopping
+  renderShopping(plan.shopping);
+  renderSupplements(plan.supplements);
+}
+
+function buildMealCard(meal, id) {
+  const card = document.createElement('div');
+  card.className = 'meal-card';
+  const liked = profile.liked.includes(meal.name);
+  const disliked = profile.disliked.includes(meal.name);
+
+  card.innerHTML = `
+    <div class="meal-inner">
+      <div class="meal-top">
+        <span class="meal-badge badge-${meal.type}">${meal.type}</span>
+        <span class="prep-time">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          ${meal.prep}
+        </span>
+      </div>
+      <div class="meal-name">${meal.name}</div>
+      <div class="meal-desc">${meal.desc}</div>
+      <div class="meal-footer">
+        <div class="macro-pills">
+          <span class="macro-pill">${meal.calories} kcal</span>
+          <span class="macro-pill">${meal.protein}g protein</span>
+          <span class="macro-pill">${meal.carbs}g carbs</span>
+          <span class="macro-pill">${meal.fat}g fat</span>
+        </div>
+      </div>
+      <div class="meal-actions">
+        <button class="action-btn ${liked?'liked':''}" id="like-${id}" onclick="rateMeal('${meal.name}','like','${id}')">
+          👍 <span>${liked?'Liked':'Like'}</span>
+        </button>
+        <button class="action-btn ${disliked?'disliked':''}" id="dislike-${id}" onclick="rateMeal('${meal.name}','dislike','${id}')">
+          👎 <span>${disliked?'Disliked':'Dislike'}</span>
+        </button>
+        <button class="action-btn" onclick="showRecipe('${id}')">📖 Recipe</button>
+      </div>
+      <div id="recipe-${id}" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border)">
+        <div style="font-size:13px; font-weight:500; margin-bottom:8px; color:var(--text-mid)">Ingredients</div>
+        <div id="recipe-ing-${id}" style="font-size:13px; color:var(--text-soft); line-height:1.8"></div>
+        <div style="font-size:13px; font-weight:500; margin-top:12px; margin-bottom:8px; color:var(--text-mid)">Method</div>
+        <div id="recipe-steps-${id}" style="font-size:13px; color:var(--text-soft); line-height:1.8"></div>
+        <div style="background:var(--green-light); border-radius:8px; padding:10px 12px; margin-top:12px; font-size:12px; color:var(--green); line-height:1.5" id="recipe-why-${id}"></div>
+      </div>
+    </div>`;
+
+  // inject recipe data
+  const dayIdx = id.split('-')[0];
+  const mealIdx = id.split('-')[1];
+  const planMeal = state.plan.days[dayIdx]?.meals[mealIdx];
+  if (planMeal?.recipe) {
+    setTimeout(() => {
+      const ingEl = document.getElementById(`recipe-ing-${id}`);
+      const stepsEl = document.getElementById(`recipe-steps-${id}`);
+      const whyEl = document.getElementById(`recipe-why-${id}`);
+      if (ingEl) ingEl.innerHTML = planMeal.recipe.ingredients.map(i => `• ${i}`).join('<br>');
+      if (stepsEl) stepsEl.innerHTML = planMeal.recipe.steps.map((s,i) => `${i+1}. ${s}`).join('<br>');
+      if (whyEl) whyEl.textContent = '✦ ' + planMeal.recipe.why;
+    }, 50);
+  }
+
+  return card;
+}
+
+function showRecipe(id) {
+  const el = document.getElementById(`recipe-${id}`);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function rateMeal(name, dir, id) {
+  if (dir === 'like') {
+    if (!profile.liked.includes(name)) { profile.liked.push(name); profile.rated++; }
+    profile.disliked = profile.disliked.filter(m => m !== name);
+    document.getElementById(`like-${id}`).className = 'action-btn liked';
+    document.getElementById(`like-${id}`).innerHTML = '👍 <span>Liked</span>';
+    document.getElementById(`dislike-${id}`).className = 'action-btn';
+    document.getElementById(`dislike-${id}`).innerHTML = '👎 <span>Dislike</span>';
+  } else {
+    if (!profile.disliked.includes(name)) { profile.disliked.push(name); profile.rated++; }
+    profile.liked = profile.liked.filter(m => m !== name);
+    document.getElementById(`dislike-${id}`).className = 'action-btn disliked';
+    document.getElementById(`dislike-${id}`).innerHTML = '👎 <span>Disliked</span>';
+    document.getElementById(`like-${id}`).className = 'action-btn';
+    document.getElementById(`like-${id}`).innerHTML = '👍 <span>Like</span>';
+  }
+  saveProfile();
+  showToast('Got it, we\'ll keep that in mind ✓');
+}
+
+// ── SHOPPING ──
+function renderShopping(shopping) {
+  const el = document.getElementById('shopping-content');
+  el.innerHTML = '';
+  Object.entries(shopping).forEach(([cat, items]) => {
+    if (!items.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'shop-category card';
+    sec.style.marginBottom = '12px';
+    sec.innerHTML = `<div class="shop-cat-label">${cat}</div>` +
+      items.map((item, i) => `
+        <div class="shop-item">
+          <div class="shop-check" id="chk-${cat}-${i}" onclick="toggleCheck(this)"></div>
+          <span class="shop-name">${item.item}${item.methylation ? ' <span class="methylation-mark">✦</span>' : ''}</span>
+          <span class="shop-qty">${item.qty}</span>
+        </div>`).join('');
+    el.appendChild(sec);
+  });
+  el.innerHTML += `<p style="font-size:11px; color:var(--text-soft); margin-top:8px; text-align:center">✦ Methylation support foods</p>`;
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+}
+
+// ── SUPPLEMENTS ──
+function renderSupplements(supplements) {
+  const el = document.getElementById('supplements-content');
+  el.innerHTML = supplements.map(s => `
+    <div class="suppl-card">
+      <div class="suppl-top">
+        <span class="suppl-name">${s.name}</span>
+        <span class="suppl-timing">${s.timing}</span>
+      </div>
+      <div class="suppl-reason">${s.reason}</div>
+      ${s.critical ? '<div class="suppl-critical">⚠ Essential for your diet</div>' : ''}
+    </div>`).join('');
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['meals','shopping','supplements'][i] === tab);
+  });
+  document.getElementById('tab-meals').style.display = tab === 'meals' ? 'block' : 'none';
+  document.getElementById('tab-shopping').style.display = tab === 'shopping' ? 'block' : 'none';
+  document.getElementById('tab-supplements').style.display = tab === 'supplements' ? 'block' : 'none';
+}
+
+// ── FEEDBACK ──
+function planFeedback(val) {
+  document.getElementById('feedback-banner').style.display = 'none';
+  profile.lastFeedback = Date.now();
+  saveProfile();
+  if (val === 'bad') {
+    showToast('Thanks — we\'ll improve your next plan');
+  } else {
+    showToast('Glad to hear it! ✓');
+  }
+}
+
+function dismissFeedback() {
+  document.getElementById('feedback-banner').style.display = 'none';
+}
+
+function saveMicroFeedback() {
+  const text = document.getElementById('micro-text').value.trim();
+  if (text) { profile.notes = text; saveProfile(); }
+  profile.lastSurvey = Date.now();
+  saveProfile();
+  document.getElementById('micro-survey').classList.remove('visible');
+  showToast('Saved — your next plan will reflect this ✓');
+}
+
+function dismissMicro() {
+  profile.lastSurvey = Date.now();
+  saveProfile();
+  document.getElementById('micro-survey').classList.remove('visible');
+}
+
+// ── PROFILE SCREEN ──
+function updateProfileScreen() {
+  document.getElementById('stat-plans').textContent = profile.plansGenerated;
+  document.getElementById('stat-rated').textContent = profile.rated;
+  document.getElementById('stat-liked').textContent = profile.liked.length;
+  document.getElementById('stat-disliked').textContent = profile.disliked.length;
+  document.getElementById('explicit-notes').value = profile.notes || '';
+
+  const likedSec = document.getElementById('liked-section');
+  const dislikedSec = document.getElementById('disliked-section');
+  likedSec.style.display = profile.liked.length ? 'block' : 'none';
+  dislikedSec.style.display = profile.disliked.length ? 'block' : 'none';
+
+  document.getElementById('liked-tags').innerHTML = profile.liked.map(m =>
+    `<span class="pref-tag pref-liked">👍 ${m}</span>`).join('');
+  document.getElementById('disliked-tags').innerHTML = profile.disliked.map(m =>
+    `<span class="pref-tag pref-disliked">👎 ${m}</span>`).join('');
+}
+
+function saveNotes() {
+  profile.notes = document.getElementById('explicit-notes').value;
+  saveProfile();
+  showToast('Notes saved ✓');
+}
+
+function resetProfile() {
+  if (confirm('Reset your taste profile? This will clear all meal ratings and notes.')) {
+    profile = { liked:[], disliked:[], notes:'', plansGenerated:0, rated:0, lastSurvey:0, lastFeedback:0 };
+    saveProfile();
+    updateProfileScreen();
+    showToast('Profile reset');
+  }
+}
+
+// ── UTILITIES ──
+function saveProfile() {
+  localStorage.setItem('nc_profile', JSON.stringify(profile));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── MOCK PLAN (fallback) ──
+function getMockPlan() {
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  return {
+    days: days.map(day => ({
+      day,
+      meals: [
+        { type:'breakfast', name:'Pasture-raised egg & spinach skillet', desc:'Soft scrambled eggs with wilted spinach, garlic and a drizzle of olive oil. High choline, methylation powerhouse.', prep:'12 min', calories:380, protein:28, carbs:6, fat:27, nutrients:['B12','Choline'], recipe:{ ingredients:['3 eggs','80g spinach','1 garlic clove','1 tbsp olive oil','Salt & pepper'], steps:['Heat olive oil in a pan over medium heat.','Add minced garlic and cook 30 seconds.','Add spinach and wilt for 2 minutes.','Whisk eggs, pour in and scramble gently.','Season and serve immediately.'], why:'Eggs are Gary Brecka\'s #1 methylation food — packed with choline and B12 that support your methylation cycle.' } },
+        { type:'lunch', name:'Grass-fed beef bowl with roasted veg', desc:'Sliced beef over cauliflower rice with roasted courgette, peppers and a lemon-herb dressing.', prep:'25 min', calories:520, protein:42, carbs:18, fat:28, nutrients:['Iron','Zinc'], recipe:{ ingredients:['150g grass-fed beef','200g cauliflower rice','1 courgette','1 pepper','1 tbsp olive oil','Lemon juice, herbs'], steps:['Season beef and cook to preference.','Roast courgette and pepper at 200°C for 18 minutes.','Sauté cauliflower rice for 5 minutes.','Assemble bowl and dress with lemon and herbs.'], why:'Grass-fed beef provides a superior Omega-6 to Omega-3 ratio — a cornerstone of Brecka\'s anti-inflammatory protocol.' } },
+        { type:'dinner', name:'Wild salmon with asparagus & sweet potato', desc:'Baked salmon fillet with roasted asparagus and a small baked sweet potato. Rich in Omega-3 and folate.', prep:'30 min', calories:560, protein:46, carbs:32, fat:24, nutrients:['Omega-3','Folate'], recipe:{ ingredients:['180g wild salmon','200g asparagus','1 small sweet potato','1 tbsp olive oil','Dill, lemon, sea salt'], steps:['Preheat oven to 200°C.','Rub salmon with olive oil, dill and lemon.','Toss asparagus in olive oil and season.','Bake salmon and asparagus 18-20 minutes.','Bake sweet potato separately for 35 minutes.'], why:'Wild salmon is the ultimate brain food — Omega-3 DHA directly supports neurological function and reduces systemic inflammation.' } }
+      ]
+    })),
+    shopping: {
+      'Proteins': [
+        { item:'Pasture-raised eggs (×21)', qty:'2 dozen', methylation:true },
+        { item:'Grass-fed beef mince', qty:'1.2kg', methylation:false },
+        { item:'Wild salmon fillets', qty:'1.3kg', methylation:false },
+        { item:'Chicken thighs (bone-in)', qty:'1kg', methylation:false }
+      ],
+      'Produce': [
+        { item:'Baby spinach', qty:'400g', methylation:true },
+        { item:'Asparagus', qty:'600g', methylation:true },
+        { item:'Courgettes', qty:'4 medium', methylation:false },
+        { item:'Sweet potatoes', qty:'6 medium', methylation:false },
+        { item:'Broccoli', qty:'2 heads', methylation:false },
+        { item:'Mixed peppers', qty:'6', methylation:false },
+        { item:'Cauliflower', qty:'2 heads', methylation:false }
+      ],
+      'Pantry': [
+        { item:'Extra virgin olive oil', qty:'500ml', methylation:false },
+        { item:'Coconut aminos', qty:'1 bottle', methylation:false },
+        { item:'Sea salt & black pepper', qty:'as needed', methylation:false }
+      ],
+      'Dairy / Alternatives': [
+        { item:'Grass-fed butter', qty:'250g', methylation:false }
+      ],
+      'Supplements': []
+    },
+    supplements: [
+      { name:'Magnesium glycinate', timing:'Evening', reason:'Supports muscle recovery, sleep quality, and over 300 enzymatic functions. Most people are deficient.', critical:false },
+      { name:'Vitamin D3 + K2', timing:'Morning with food', reason:'D3 supports immune function and testosterone production. K2 ensures calcium goes to bones, not arteries.', critical:false },
+      { name:'Omega-3 (fish oil)', timing:'With lunch', reason:'Reduces systemic inflammation and supports brain function. Essential unless eating wild fish 3×/week.', critical:false },
+      { name:'Methylated B-complex', timing:'Morning', reason:'Supports your methylation cycle directly. Look for methylfolate (not folic acid) and methylcobalamin (B12).', critical:true }
+    ]
+  };
+}
+
+// ── INIT ──
+// Pre-select "None" diet chip
+document.querySelector('[data-val="none"]').classList.add('selected');
+</script>
+</body>
+</html>
